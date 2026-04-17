@@ -31,10 +31,19 @@ export async function createInvoice(formData: FormData) {
   console.log({ customerId, amount, status });
   console.log(typeof amount);
 
-  await sql`
-    INSERT INTO invoices (customer_id, amount, status, date)
-    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-  `;
+  try {
+    await sql`
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    `;
+  } catch (error) {
+    // Log error
+    console.error(error)
+
+    return {
+      message: 'Database error: failed to create invoice'
+    }
+  }
 
   // clear browser router cache and trigger a new request to the server.
   // path will be revalidated, and fresh data will be fetched from the server.
@@ -55,11 +64,18 @@ export async function updateInvoice(id: string, formData: FormData) {
 
   const amountInCents = amount * 100;
 
-  await sql`
-    UPDATE invoices
-    SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-    WHERE id = ${id}
-  `;
+  try {
+    await sql`
+      UPDATE invoices
+      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    console.error(error)
+    return {
+      message: 'Database error: failed to update invoice'
+    }
+  }
 
   revalidatePath('/dashboard/invoices');
   redirect('/dashboard/invoices');
